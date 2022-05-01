@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use crate::injector;
 use eframe::egui;
 use rfd;
 
@@ -30,7 +31,7 @@ pub fn draw_window() {
 
 // this struct holds application data for window lifecycle
 pub struct DLLCrabWindow {
-    name: String,
+    pid: String,
     dll_name: String,
     dll_path: String,
 }
@@ -38,10 +39,24 @@ pub struct DLLCrabWindow {
 impl Default for DLLCrabWindow {
     fn default() -> Self {
         Self {
-            name: String::from("..."),
+            pid: String::from("0"),
             dll_name: String::from("..."),
             dll_path: String::new(),
         }
+    }
+}
+
+impl DLLCrabWindow {
+    pub fn inject(&self) {
+        let pid = self.pid.parse::<u32>();
+
+        if pid.is_err() {
+            println!("Error!");
+            return;
+        }
+
+        let pid: u32 = pid.unwrap();
+        injector::inject_dll(pid, &self.dll_path);
     }
 }
 
@@ -60,8 +75,8 @@ impl eframe::App for DLLCrabWindow {
 
             // application pid textbox
             ui.horizontal(|ui| {
-                ui.label("Application: ");
-                ui.text_edit_singleline(&mut self.name);
+                ui.label("Application PID: ");
+                ui.text_edit_singleline(&mut self.pid);
             });
 
             // display buttons as inline-block
@@ -78,7 +93,7 @@ impl eframe::App for DLLCrabWindow {
 
                 // inject dll
                 if ui.button("Inject").clicked() {
-                    println!("injected!")
+                    self.inject()
                 }
             });
         });
