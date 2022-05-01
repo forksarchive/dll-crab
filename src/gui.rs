@@ -5,7 +5,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::injector;
-use eframe::{egui, egui::containers::ScrollArea};
+use eframe::{egui, egui::containers::ScrollArea, epaint};
 use rfd::FileDialog;
 use std::collections::HashMap;
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
@@ -15,7 +15,7 @@ pub fn draw_window() {
     // window options
     let options = eframe::NativeOptions {
         resizable: false,
-        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 300.0 }),
+        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 350.0 }),
         ..eframe::NativeOptions::default()
     };
 
@@ -81,7 +81,27 @@ impl DLLCrabWindow {
 // import eframe's lifecycle
 impl eframe::App for DLLCrabWindow {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui: &mut egui::Ui| {
+        let main_frame = egui::containers::Frame {
+            rounding: egui::Rounding::none(),
+            shadow: epaint::Shadow{
+                extrusion: 0.0,
+                color: egui::Color32::BLACK
+            },
+            ..egui::containers::Frame::window(&egui::Style::default())
+        };
+
+        // bottom panel
+        egui::TopBottomPanel::bottom("decoration").frame(main_frame).show(ctx, |ui: &mut egui::Ui| {
+            ui.small("v1.0.0");
+            egui::menu::bar(ui, |ui: &mut egui::Ui| {
+                ui.hyperlink_to("Source Code", "https://github.com/aiocat/dll-crab");
+                ui.hyperlink_to("Credits", "https://github.com/aiocat");
+                ui.hyperlink_to("License", "https://github.com/aiocat/dll-crab/blob/main/LICENSE");
+            });
+        });
+
+        // main part
+        egui::CentralPanel::default().frame(main_frame).show(ctx, |ui: &mut egui::Ui| {
             // title
             ui.heading("Injection");
             ui.add_space(4.0);
