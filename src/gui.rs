@@ -10,6 +10,8 @@ use crate::msgbox;
 use eframe::{egui, egui::containers::ScrollArea, epaint};
 use rfd::FileDialog;
 use std::collections::HashMap;
+use std::path::Path;
+use std::ffi::OsStr;
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 
 // this function runs a new egui instance
@@ -68,8 +70,16 @@ impl Default for DLLCrabWindow {
 
 impl DLLCrabWindow {
     pub fn inject(&self) {
-        let pid = self.pid.parse::<u32>();
+        // check if ends with dll
+        if Path::new(&self.dll_path).extension().unwrap_or(&OsStr::new("")) != "dll" {
+            unsafe {
+                msgbox::error("Library path is invalid. Please select a library to continue...");
+            };
+            return;
+        }
 
+        // check pid format
+        let pid = self.pid.parse::<u32>();
         if pid.is_err() {
             unsafe {
                 msgbox::error("PID format is invalid. Please check your input!");
@@ -77,9 +87,11 @@ impl DLLCrabWindow {
             return;
         }
 
+        // run injector
         let pid: u32 = pid.unwrap();
         let result = injector::inject_dll(pid, &self.dll_path);
 
+        // check result
         unsafe {
             if !result {
                 msgbox::error("Injection failed. Maybe PID is invalid?");

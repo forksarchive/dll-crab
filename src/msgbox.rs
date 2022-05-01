@@ -7,6 +7,7 @@ use std::ffi::CString;
 use std::mem;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
+// create a native error message box
 pub unsafe fn error(msg: &str) {
     let title = CString::new("DLL Crab").unwrap();
     let message_c = CString::new(msg).unwrap();
@@ -19,6 +20,7 @@ pub unsafe fn error(msg: &str) {
     );
 }
 
+// create a native information message box
 pub unsafe fn info(msg: &str) {
     let title = CString::new("DLL Crab").unwrap();
     let message_c = CString::new(msg).unwrap();
