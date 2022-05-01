@@ -108,5 +108,5 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
         CloseHandle(process);
     }
 
-    return success;
+    success
 }
