@@ -2,6 +2,7 @@
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+#![allow(clippy::missing_safety_doc)]
 
 use std::ffi::CString;
 use std::mem;

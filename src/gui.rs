@@ -73,7 +73,7 @@ impl DLLCrabWindow {
         // check if ends with dll
         if Path::new(&self.dll_path)
             .extension()
-            .unwrap_or(&OsStr::new(""))
+            .unwrap_or_else(|| OsStr::new(""))
             != "dll"
         {
             unsafe {
@@ -131,7 +131,7 @@ impl eframe::App for DLLCrabWindow {
                         ui.heading("DLL Crab");
                         ui.label("(drag and drop)");
                     });
-    
+
                     if item.response.hovered() {
                         frame.drag_window();
                     }
