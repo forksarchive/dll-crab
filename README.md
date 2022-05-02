@@ -11,7 +11,7 @@
 
 # DLL Crab
 
-DLL Injector written in Rust.
+Rusty DLL Injector with GUI
 
 Uses simplest way to inject a DLL, so I don't recommend to use for your hacks. (`CreateRemoteThread`)
 
