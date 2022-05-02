@@ -45,6 +45,7 @@ pub struct DLLCrabWindow {
     process_filter: String,
     system: System,
     processes: HashMap<u32, String>,
+    close_after_injection: bool,
 }
 
 impl Default for DLLCrabWindow {
@@ -56,6 +57,7 @@ impl Default for DLLCrabWindow {
             process_filter: String::from("Filter"),
             system: System::new_all(),
             processes: HashMap::new(),
+            close_after_injection: false,
         };
 
         data.system.refresh_all();
@@ -191,8 +193,15 @@ impl eframe::App for DLLCrabWindow {
 
                     // inject dll
                     if ui.button("Inject").clicked() {
-                        self.inject()
+                        self.inject();
+
+                        if self.close_after_injection {
+                            frame.quit();
+                        }
                     }
+
+                    // set close_after_injection
+                    ui.checkbox(&mut self.close_after_injection, "Close After Injection");
                 });
 
                 ui.add_space(8.0);
