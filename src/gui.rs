@@ -2,7 +2,6 @@
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::injector;
 use crate::msgbox;
@@ -10,8 +9,8 @@ use crate::msgbox;
 use eframe::{egui, egui::containers::ScrollArea, epaint};
 use rfd::FileDialog;
 use std::collections::HashMap;
-use std::path::Path;
 use std::ffi::OsStr;
+use std::path::Path;
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 
 // this function runs a new egui instance
@@ -19,8 +18,9 @@ pub fn draw_window() {
     // window options
     let options = eframe::NativeOptions {
         resizable: false,
-        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 350.0 }),
-        ..eframe::NativeOptions::default()
+        decorated: false,
+        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 400.0 }),
+        ..Default::default()
     };
 
     // draw window
@@ -51,7 +51,7 @@ impl Default for DLLCrabWindow {
     fn default() -> Self {
         let mut data = Self {
             pid: String::from("0"),
-            dll_name: String::from("..."),
+            dll_name: String::from("None"),
             dll_path: String::new(),
             process_filter: String::from("Filter"),
             system: System::new_all(),
@@ -71,7 +71,11 @@ impl Default for DLLCrabWindow {
 impl DLLCrabWindow {
     pub fn inject(&self) {
         // check if ends with dll
-        if Path::new(&self.dll_path).extension().unwrap_or(&OsStr::new("")) != "dll" {
+        if Path::new(&self.dll_path)
+            .extension()
+            .unwrap_or(&OsStr::new(""))
+            != "dll"
+        {
             unsafe {
                 msgbox::error("Library path is invalid. Please select a library to continue...");
             };
@@ -104,7 +108,7 @@ impl DLLCrabWindow {
 
 // import eframe's lifecycle
 impl eframe::App for DLLCrabWindow {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let main_frame = egui::containers::Frame {
             rounding: egui::Rounding::none(),
             shadow: epaint::Shadow {
@@ -114,8 +118,28 @@ impl eframe::App for DLLCrabWindow {
             ..egui::containers::Frame::window(&egui::Style::default())
         };
 
+        // top panel
+        egui::TopBottomPanel::top("top")
+            .frame(main_frame)
+            .show(ctx, |ui: &mut egui::Ui| {
+                ui.horizontal(|ui: &mut egui::Ui| {
+                    if ui.button("X").clicked() {
+                        frame.quit();
+                    }
+
+                    let item = egui::menu::bar(ui, |ui: &mut egui::Ui| {
+                        ui.heading("DLL Crab");
+                        ui.label("(drag and drop)");
+                    });
+    
+                    if item.response.hovered() {
+                        frame.drag_window();
+                    }
+                })
+            });
+
         // bottom panel
-        egui::TopBottomPanel::bottom("decoration")
+        egui::TopBottomPanel::bottom("bottom")
             .frame(main_frame)
             .show(ctx, |ui: &mut egui::Ui| {
                 ui.small("v1.0.0");
@@ -192,7 +216,7 @@ impl eframe::App for DLLCrabWindow {
 
                         self.processes = HashMap::new();
                         for (pid, process) in self.system.processes() {
-                            if process.name().contains(&self.process_filter) {
+                            if process.name().to_lowercase().contains(&self.process_filter) {
                                 self.processes
                                     .insert(pid.as_u32(), process.name().to_string());
                             }

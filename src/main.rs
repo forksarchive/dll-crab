@@ -2,12 +2,12 @@
 //
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod gui;
 pub mod injector;
 pub mod msgbox;
 
 fn main() {
-    println!("Hello, world!");
     gui::draw_window();
 }
