@@ -265,7 +265,7 @@ impl eframe::App for DLLCrabWindow {
 
                         self.processes = HashMap::new();
                         for (pid, process) in self.system.processes() {
-                            if process.name().to_lowercase().contains(&self.process_filter) {
+                            if process.name().to_lowercase().contains(&self.process_filter.to_lowercase()) {
                                 self.processes
                                     .insert(pid.as_u32(), process.name().to_string());
                             }
