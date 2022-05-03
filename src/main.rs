@@ -7,6 +7,7 @@
 mod gui;
 pub mod injector;
 pub mod msgbox;
+pub mod spoof;
 
 fn main() {
     gui::draw_window();

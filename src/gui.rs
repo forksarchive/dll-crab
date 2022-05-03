@@ -4,6 +4,7 @@
 // https://opensource.org/licenses/MIT
 
 use crate::injector;
+use crate::spoof;
 use crate::msgbox;
 
 use eframe::{egui, egui::containers::ScrollArea, epaint};
@@ -30,6 +31,7 @@ pub struct DLLCrabWindow {
     system: System,
     processes: HashMap<u32, String>,
     close_after_injection: bool,
+    spoofing: bool,
     selected_method: InjectionMethods,
 }
 
@@ -67,6 +69,7 @@ impl Default for DLLCrabWindow {
             system: System::new_all(),
             processes: HashMap::new(),
             close_after_injection: false,
+            spoofing: false,
             selected_method: InjectionMethods::CreateRemoteThread,
         };
 
@@ -112,7 +115,14 @@ impl DLLCrabWindow {
             InjectionMethods::NtCreateThreadEx => injector::inject_nt_create_thread_ex,
         };
 
-        let result = function_to_use(pid, &self.dll_path);
+        // get dll path
+        let dll_path = if self.spoofing {
+            spoof::spoof_dll(self.dll_path.clone())
+        } else {
+            self.dll_path.clone()
+        };
+
+        let result = function_to_use(pid, &dll_path);
 
         // check result
         unsafe {
@@ -187,6 +197,9 @@ impl eframe::App for DLLCrabWindow {
                     ui.label("Selected DLL: ");
                     ui.label(&self.dll_name);
                 });
+
+                // spoof dll
+                ui.checkbox(&mut self.spoofing, "Spoof DLL");
 
                 // application pid textbox
                 ui.horizontal(|ui: &mut egui::Ui| {
