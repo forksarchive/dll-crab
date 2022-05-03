@@ -30,6 +30,7 @@ Because I can't find a GUI DLL Injector that written in Rust. and I decided to m
 
 - CreateRemoteThread
 - RtlCreateUserThread
+- QueueUserAPC
 
 ## Download
 

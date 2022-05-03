@@ -17,6 +17,7 @@ use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 enum InjectionMethods {
     CreateRemoteThread,
     RtlCreateUserThread,
+    QueueUserAPC,
 }
 
 // this struct holds application data for window lifecycle
@@ -106,6 +107,7 @@ impl DLLCrabWindow {
         let function_to_use = match self.selected_method {
             InjectionMethods::CreateRemoteThread => injector::inject_create_remote_thread,
             InjectionMethods::RtlCreateUserThread => injector::inject_rtl_create_user_thread,
+            InjectionMethods::QueueUserAPC => injector::inject_queue_user_apc,
         };
 
         let result = function_to_use(pid, &self.dll_path);
@@ -207,6 +209,11 @@ impl eframe::App for DLLCrabWindow {
                                 &mut self.selected_method,
                                 InjectionMethods::RtlCreateUserThread,
                                 "RtlCreateUserThread",
+                            );
+                            ui.selectable_value(
+                                &mut self.selected_method,
+                                InjectionMethods::QueueUserAPC,
+                                "QueueUserAPC",
                             );
                         });
                 });
