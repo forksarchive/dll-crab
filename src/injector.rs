@@ -131,8 +131,8 @@ pub fn inject_create_remote_thread(pid: u32, dll_path: &str) -> bool {
     success
 }
 
-// inject dll with RltCreateUserThread function which is undocumented
-pub fn inject_rlt_create_user_thread(pid: u32, dll_path: &str) -> bool {
+// inject dll with RtlCreateUserThread function which is undocumented
+pub fn inject_rtl_create_user_thread(pid: u32, dll_path: &str) -> bool {
     // c-compatible string for injecting to process memory
     let path_to_dll = CString::new(dll_path);
     if path_to_dll.is_err() {

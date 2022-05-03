@@ -16,7 +16,7 @@ use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 #[derive(Debug, std::cmp::PartialEq)]
 enum InjectionMethods {
     CreateRemoteThread,
-    RltCreateUserThread,
+    RtlCreateUserThread,
 }
 
 // this struct holds application data for window lifecycle
@@ -105,7 +105,7 @@ impl DLLCrabWindow {
         let pid: u32 = pid.unwrap();
         let function_to_use = match self.selected_method {
             InjectionMethods::CreateRemoteThread => injector::inject_create_remote_thread,
-            InjectionMethods::RltCreateUserThread => injector::inject_rlt_create_user_thread,
+            InjectionMethods::RtlCreateUserThread => injector::inject_rtl_create_user_thread,
         };
 
         let result = function_to_use(pid, &self.dll_path);
@@ -202,8 +202,8 @@ impl eframe::App for DLLCrabWindow {
                             );
                             ui.selectable_value(
                                 &mut self.selected_method,
-                                InjectionMethods::RltCreateUserThread,
-                                "RltCreateUserThread",
+                                InjectionMethods::RtlCreateUserThread,
+                                "RtlCreateUserThread",
                             );
                         });
                 });

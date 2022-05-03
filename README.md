@@ -13,8 +13,6 @@
 
 Rusty DLL Injector with GUI
 
-Uses simplest way to inject a DLL, so I don't recommend to use for your hacks. (`CreateRemoteThread`)
-
 ## Screenshot
 
 ![Screenshot](./assets/screenshot.png)
@@ -24,6 +22,10 @@ Uses simplest way to inject a DLL, so I don't recommend to use for your hacks. (
 ## Why?
 
 Because I can't find a GUI DLL Injector that written in Rust. and I decided to made an one.
+
+## Methods
+- CreateRemoteThread
+- RtlCreateUserThread
 
 ## Download
 
