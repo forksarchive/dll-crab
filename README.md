@@ -13,6 +13,9 @@
 
 Rusty DLL Injector with GUI
 
+[![Build status](https://ci.appveyor.com/api/projects/status/h6fpyexoryiddtv7?svg=true)](https://ci.appveyor.com/project/aiocat/dll-crab)
+[![Unsafe](https://img.shields.io/badge/unsafe-%E2%9C%94-C901DD.svg)](https://doc.rust-lang.org/book/ch19-01-unsafe-rust.html)
+
 ## Screenshot
 
 ![Screenshot](./assets/screenshot.png)
@@ -24,6 +27,7 @@ Rusty DLL Injector with GUI
 Because I can't find a GUI DLL Injector that written in Rust. and I decided to made an one.
 
 ## Methods
+
 - CreateRemoteThread
 - RtlCreateUserThread
 
