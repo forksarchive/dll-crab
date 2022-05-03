@@ -156,7 +156,7 @@ impl eframe::App for DLLCrabWindow {
         egui::TopBottomPanel::bottom("bottom")
             .frame(main_frame)
             .show(ctx, |ui: &mut egui::Ui| {
-                ui.small("v1.0.0");
+                ui.small("v1.1.0");
                 egui::menu::bar(ui, |ui: &mut egui::Ui| {
                     ui.hyperlink_to("Source Code", "https://github.com/aiocat/dll-crab");
                     ui.hyperlink_to(
@@ -190,8 +190,11 @@ impl eframe::App for DLLCrabWindow {
                     ui.text_edit_singleline(&mut self.pid);
                 });
 
+                // injection method combobox
                 ui.horizontal(|ui: &mut egui::Ui| {
                     ui.label("Injection Method: ");
+
+                    // combobox
                     egui::ComboBox::from_label("")
                         .selected_text(format!("{:?}", self.selected_method))
                         .show_ui(ui, |ui| {
