@@ -6,7 +6,8 @@
 
 use std::ffi::CString;
 use std::mem;
-use windows::Win32::UI::WindowsAndMessaging::*;
+use std::ptr;
+use winapi::um::winuser::{MessageBoxA, MB_ICONERROR, MB_ICONINFORMATION, MB_OK};
 
 // create a native error message box
 pub unsafe fn error(msg: &str) {
@@ -14,9 +15,9 @@ pub unsafe fn error(msg: &str) {
     let message_c = CString::new(msg).unwrap();
 
     MessageBoxA(
-        None,
-        Some(mem::transmute(message_c.as_ptr())),
-        Some(mem::transmute(title.as_ptr())),
+        ptr::null_mut(),
+        mem::transmute(message_c.as_ptr()),
+        mem::transmute(title.as_ptr()),
         MB_ICONERROR | MB_OK,
     );
 }
@@ -27,9 +28,9 @@ pub unsafe fn info(msg: &str) {
     let message_c = CString::new(msg).unwrap();
 
     MessageBoxA(
-        None,
-        Some(mem::transmute(message_c.as_ptr())),
-        Some(mem::transmute(title.as_ptr())),
+        ptr::null_mut(),
+        mem::transmute(message_c.as_ptr()),
+        mem::transmute(title.as_ptr()),
         MB_ICONINFORMATION | MB_OK,
     );
 }

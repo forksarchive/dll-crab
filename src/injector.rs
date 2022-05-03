@@ -3,10 +3,13 @@
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
-use windows::{
-    Win32::Foundation::*, Win32::System::Diagnostics::Debug::*, Win32::System::LibraryLoader::*,
-    Win32::System::Memory::*, Win32::System::Threading::*,
-};
+use winapi::shared::minwindef::BOOL;
+use winapi::um::handleapi::CloseHandle;
+use winapi::um::libloaderapi::{FreeLibrary, GetModuleHandleA, GetProcAddress};
+use winapi::um::memoryapi::{VirtualAllocEx, VirtualFreeEx, WriteProcessMemory};
+use winapi::um::processthreadsapi::{CreateRemoteThread, GetExitCodeThread, OpenProcess};
+use winapi::um::synchapi::WaitForSingleObject;
+use winapi::um::winnt::{MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_READWRITE, PROCESS_ALL_ACCESS};
 
 use std::ffi::{c_void, CString};
 use std::mem;
@@ -24,17 +27,13 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
     let mut thread_id = 0;
 
     // get process
-    let process = unsafe { OpenProcess(PROCESS_ALL_ACCESS, BOOL(0), pid) };
-    if process.is_err() {
-        return false;
-    }
-    let process: HANDLE = process.unwrap();
+    let process = unsafe { OpenProcess(PROCESS_ALL_ACCESS, false as BOOL, pid) };
 
     // alloc adress for dll path
     let adress = unsafe {
         VirtualAllocEx(
             process,
-            ptr::null(),
+            ptr::null_mut(),
             path_to_dll.as_bytes().len() + 1,
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
@@ -44,16 +43,13 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
     // get kernel32
     let kernel32_dll = unsafe {
         let kernel32_name = CString::new("kernel32.dll").unwrap();
-        GetModuleHandleA(Some(mem::transmute(kernel32_name.as_ptr())))
+        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
     };
 
     // get load library function from kernel32
     let load_library = unsafe {
         let load_library_name = CString::new("LoadLibraryA").unwrap();
-        GetProcAddress(
-            kernel32_dll,
-            Some(mem::transmute(load_library_name.as_ptr())),
-        )
+        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
     };
 
     unsafe {
@@ -71,7 +67,7 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
     let process_thread = unsafe {
         CreateRemoteThread(
             process,
-            ptr::null(),
+            ptr::null_mut(),
             0,
             Some(mem::transmute(load_library)),
             adress,
@@ -79,11 +75,6 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
             &mut thread_id,
         )
     };
-
-    if process_thread.is_err() {
-        return false;
-    }
-    let process_thread: HANDLE = process_thread.unwrap();
 
     // wait for thread
     unsafe {
@@ -95,7 +86,7 @@ pub fn inject_dll(pid: u32, dll_path: &str) -> bool {
     let mut success: bool = false;
 
     unsafe {
-        if GetExitCodeThread(process_thread, &mut exit_code) == BOOL(1) {
+        if GetExitCodeThread(process_thread, &mut exit_code) == true as BOOL {
             success = true;
         }
     }

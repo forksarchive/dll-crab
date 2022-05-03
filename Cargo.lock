@@ -425,7 +425,7 @@ dependencies = [
  "eframe",
  "rfd",
  "sysinfo",
- "windows",
+ "winapi",
  "winres",
 ]
 

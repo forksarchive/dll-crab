@@ -19,7 +19,7 @@ pub fn draw_window() {
     let options = eframe::NativeOptions {
         resizable: false,
         decorated: false,
-        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 400.0 }),
+        initial_window_size: Some(egui::Vec2 { x: 300.0, y: 450.0 }),
         ..Default::default()
     };
 
@@ -131,13 +131,12 @@ impl eframe::App for DLLCrabWindow {
 
                     let item = egui::menu::bar(ui, |ui: &mut egui::Ui| {
                         ui.heading("DLL Crab");
-                        ui.label("(drag and drop)");
                     });
 
                     if item.response.hovered() {
                         frame.drag_window();
                     }
-                })
+                });
             });
 
         // bottom panel
