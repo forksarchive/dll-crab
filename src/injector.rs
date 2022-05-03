@@ -18,8 +18,10 @@ use winapi::um::tlhelp32::{
 };
 use winapi::um::winnt::{
     HANDLE, MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_READWRITE, PHANDLE, PROCESS_ALL_ACCESS,
+    THREAD_GET_CONTEXT, THREAD_SET_CONTEXT, THREAD_SUSPEND_RESUME,
 };
 
+use ntapi::ntpsapi::NtCreateThreadEx;
 use ntapi::ntrtl::RtlCreateUserThread;
 
 use std::ffi::{c_void, CString};
@@ -52,18 +54,6 @@ pub fn inject_create_remote_thread(pid: u32, dll_path: &str) -> bool {
         )
     };
 
-    // get kernel32
-    let kernel32_dll = unsafe {
-        let kernel32_name = CString::new("kernel32.dll").unwrap();
-        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
-    };
-
-    // get load library function from kernel32
-    let load_library = unsafe {
-        let load_library_name = CString::new("LoadLibraryA").unwrap();
-        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
-    };
-
     let mut success: bool;
     unsafe {
         // write dll path to process memory
@@ -79,13 +69,24 @@ pub fn inject_create_remote_thread(pid: u32, dll_path: &str) -> bool {
     // check status
     if !success {
         unsafe {
-            FreeLibrary(kernel32_dll);
             VirtualFreeEx(process, adress, 0, MEM_RELEASE);
             CloseHandle(process);
         }
 
         return false;
     }
+
+    // get kernel32
+    let kernel32_dll = unsafe {
+        let kernel32_name = CString::new("kernel32.dll").unwrap();
+        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
+    };
+
+    // get load library function from kernel32
+    let load_library = unsafe {
+        let load_library_name = CString::new("LoadLibraryA").unwrap();
+        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
+    };
 
     // load dll
     let process_thread = unsafe {
@@ -162,18 +163,6 @@ pub fn inject_rtl_create_user_thread(pid: u32, dll_path: &str) -> bool {
         )
     };
 
-    // get kernel32
-    let kernel32_dll = unsafe {
-        let kernel32_name = CString::new("kernel32.dll").unwrap();
-        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
-    };
-
-    // get load library function from kernel32
-    let load_library = unsafe {
-        let load_library_name = CString::new("LoadLibraryA").unwrap();
-        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
-    };
-
     let mut success: bool;
     unsafe {
         // write dll path to process memory
@@ -189,13 +178,24 @@ pub fn inject_rtl_create_user_thread(pid: u32, dll_path: &str) -> bool {
     // check status
     if !success {
         unsafe {
-            FreeLibrary(kernel32_dll);
             VirtualFreeEx(process, adress, 0, MEM_RELEASE);
             CloseHandle(process);
         }
 
         return false;
     }
+
+    // get kernel32
+    let kernel32_dll = unsafe {
+        let kernel32_name = CString::new("kernel32.dll").unwrap();
+        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
+    };
+
+    // get load library function from kernel32
+    let load_library = unsafe {
+        let load_library_name = CString::new("LoadLibraryA").unwrap();
+        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
+    };
 
     // load dll
     let mut process_thread: HANDLE = ptr::null_mut();
@@ -283,18 +283,6 @@ pub fn inject_queue_user_apc(pid: u32, dll_path: &str) -> bool {
         )
     };
 
-    // get kernel32
-    let kernel32_dll = unsafe {
-        let kernel32_name = CString::new("kernel32.dll").unwrap();
-        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
-    };
-
-    // get load library function from kernel32
-    let load_library = unsafe {
-        let load_library_name = CString::new("LoadLibraryA").unwrap();
-        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
-    };
-
     unsafe {
         // write dll path to process memory
         success = WriteProcessMemory(
@@ -309,7 +297,6 @@ pub fn inject_queue_user_apc(pid: u32, dll_path: &str) -> bool {
     // check status
     if !success {
         unsafe {
-            FreeLibrary(kernel32_dll);
             VirtualFreeEx(process, adress, 0, MEM_RELEASE);
             CloseHandle(process);
         };
@@ -317,9 +304,27 @@ pub fn inject_queue_user_apc(pid: u32, dll_path: &str) -> bool {
         return false;
     }
 
+    // get kernel32
+    let kernel32_dll = unsafe {
+        let kernel32_name = CString::new("kernel32.dll").unwrap();
+        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
+    };
+
+    // get load library function from kernel32
+    let load_library = unsafe {
+        let load_library_name = CString::new("LoadLibraryA").unwrap();
+        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
+    };
+
     // load dll to all threads
     for tid in &tids {
-        let process_thread = unsafe { OpenThread(0x0010, false as BOOL, *tid) };
+        let process_thread = unsafe {
+            OpenThread(
+                THREAD_SET_CONTEXT | THREAD_GET_CONTEXT | THREAD_SUSPEND_RESUME,
+                false as BOOL,
+                *tid,
+            )
+        };
 
         // check status
         if process_thread.is_null() {
@@ -362,6 +367,119 @@ pub fn inject_queue_user_apc(pid: u32, dll_path: &str) -> bool {
     success
 }
 
+// inject dll with NtCreateThreadEx function which is undocumented
+pub fn inject_nt_create_thread_ex(pid: u32, dll_path: &str) -> bool {
+    // c-compatible string for injecting to process memory
+    let path_to_dll = CString::new(dll_path);
+    if path_to_dll.is_err() {
+        return false;
+    }
+    let path_to_dll: CString = path_to_dll.unwrap();
+
+    let mut written_bytes = 0;
+
+    // get process
+    let process = unsafe { OpenProcess(PROCESS_ALL_ACCESS, false as BOOL, pid) };
+
+    // alloc adress for dll path
+    let adress = unsafe {
+        VirtualAllocEx(
+            process,
+            ptr::null_mut(),
+            path_to_dll.as_bytes().len() + 1,
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_READWRITE,
+        )
+    };
+
+    let mut success: bool;
+    unsafe {
+        // write dll path to process memory
+        success = WriteProcessMemory(
+            process,
+            adress,
+            path_to_dll.as_c_str().as_ptr() as *const c_void,
+            path_to_dll.as_bytes().len() + 1,
+            &mut written_bytes,
+        ) != 0;
+    }
+
+    // check status
+    if !success {
+        unsafe {
+            VirtualFreeEx(process, adress, 0, MEM_RELEASE);
+            CloseHandle(process);
+        }
+
+        return false;
+    }
+
+    // get kernel32
+    let kernel32_dll = unsafe {
+        let kernel32_name = CString::new("kernel32.dll").unwrap();
+        GetModuleHandleA(mem::transmute(kernel32_name.as_ptr()))
+    };
+
+    // get load library function from kernel32
+    let load_library = unsafe {
+        let load_library_name = CString::new("LoadLibraryA").unwrap();
+        GetProcAddress(kernel32_dll, mem::transmute(load_library_name.as_ptr()))
+    };
+
+    // load dll
+    let mut process_thread: HANDLE = ptr::null_mut();
+    unsafe {
+        success = NT_SUCCESS(NtCreateThreadEx(
+            &mut process_thread,
+            0x1FFFFF,
+            ptr::null_mut(),
+            process,
+            mem::transmute(load_library),
+            adress,
+            0,
+            0,
+            0,
+            0,
+            ptr::null_mut(),
+        ));
+    }
+
+    // check status
+    if !success {
+        unsafe {
+            CloseHandle(process_thread as HANDLE);
+            FreeLibrary(kernel32_dll);
+            VirtualFreeEx(process, adress, 0, MEM_RELEASE);
+            CloseHandle(process);
+        }
+        return false;
+    }
+
+    // wait for thread
+    unsafe {
+        WaitForSingleObject(process_thread as HANDLE, 0xFFFFFFFF);
+    }
+
+    // get thread exit result
+    let mut exit_code = 0;
+
+    unsafe {
+        if GetExitCodeThread(process_thread as HANDLE, &mut exit_code) == true as BOOL {
+            success = true;
+        }
+    }
+
+    // de-alloc memory, free libraries (memory safety)
+    unsafe {
+        CloseHandle(process_thread as HANDLE);
+        FreeLibrary(kernel32_dll);
+        VirtualFreeEx(process, adress, 0, MEM_RELEASE);
+        CloseHandle(process);
+    }
+
+    success
+}
+
 // list tids from pid
 unsafe fn get_tids_by_pid(pid: u32) -> (Vec<DWORD>, bool) {
     let mut tids: Vec<DWORD> = Vec::new();
@@ -395,5 +513,6 @@ unsafe fn get_tids_by_pid(pid: u32) -> (Vec<DWORD>, bool) {
         return (tids, false);
     }
 
+    CloseHandle(handle_snapshot);
     (tids, true)
 }

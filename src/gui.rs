@@ -18,6 +18,7 @@ enum InjectionMethods {
     CreateRemoteThread,
     RtlCreateUserThread,
     QueueUserAPC,
+    NtCreateThreadEx,
 }
 
 // this struct holds application data for window lifecycle
@@ -108,6 +109,7 @@ impl DLLCrabWindow {
             InjectionMethods::CreateRemoteThread => injector::inject_create_remote_thread,
             InjectionMethods::RtlCreateUserThread => injector::inject_rtl_create_user_thread,
             InjectionMethods::QueueUserAPC => injector::inject_queue_user_apc,
+            InjectionMethods::NtCreateThreadEx => injector::inject_nt_create_thread_ex,
         };
 
         let result = function_to_use(pid, &self.dll_path);
@@ -215,6 +217,11 @@ impl eframe::App for DLLCrabWindow {
                                 InjectionMethods::QueueUserAPC,
                                 "QueueUserAPC",
                             );
+                            ui.selectable_value(
+                                &mut self.selected_method,
+                                InjectionMethods::NtCreateThreadEx,
+                                "NtCreateThreadEx",
+                            );
                         });
                 });
 
@@ -265,7 +272,11 @@ impl eframe::App for DLLCrabWindow {
 
                         self.processes = HashMap::new();
                         for (pid, process) in self.system.processes() {
-                            if process.name().to_lowercase().contains(&self.process_filter.to_lowercase()) {
+                            if process
+                                .name()
+                                .to_lowercase()
+                                .contains(&self.process_filter.to_lowercase())
+                            {
                                 self.processes
                                     .insert(pid.as_u32(), process.name().to_string());
                             }
