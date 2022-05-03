@@ -170,7 +170,7 @@ impl eframe::App for DLLCrabWindow {
         egui::TopBottomPanel::bottom("bottom")
             .frame(main_frame)
             .show(ctx, |ui: &mut egui::Ui| {
-                ui.small("v1.2.0");
+                ui.small("v1.3.0");
                 egui::menu::bar(ui, |ui: &mut egui::Ui| {
                     ui.hyperlink_to("Source Code", "https://github.com/aiocat/dll-crab");
                     ui.hyperlink_to(
@@ -197,9 +197,6 @@ impl eframe::App for DLLCrabWindow {
                     ui.label("Selected DLL: ");
                     ui.label(&self.dll_name);
                 });
-
-                // spoof dll
-                ui.checkbox(&mut self.spoofing, "Spoof DLL");
 
                 // application pid textbox
                 ui.horizontal(|ui: &mut egui::Ui| {
@@ -238,6 +235,15 @@ impl eframe::App for DLLCrabWindow {
                         });
                 });
 
+                // checkboxes
+                ui.horizontal(|ui: &mut egui::Ui| {
+                    // dll spoof
+                    ui.checkbox(&mut self.spoofing, "Spoof DLL");
+                    
+                    // set close_after_injection
+                    ui.checkbox(&mut self.close_after_injection, "Close After Injection");
+                });
+
                 // display buttons as inline-block
                 ui.horizontal(|ui: &mut egui::Ui| {
                     // open dll file dialog
@@ -259,9 +265,6 @@ impl eframe::App for DLLCrabWindow {
                             frame.quit();
                         }
                     }
-
-                    // set close_after_injection
-                    ui.checkbox(&mut self.close_after_injection, "Close After Injection");
                 });
 
                 ui.add_space(8.0);

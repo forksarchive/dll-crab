@@ -18,9 +18,8 @@ Rusty DLL Injector with GUI
 
 ## Screenshot
 
-![Screenshot](./assets/screenshot.png)
-
-*(UI is same with v1.2.0)*
+![Screenshot 1](./assets/screenshot_1.png)
+![Screenshot 2](./assets/screenshot_2.png)
 
 </div>
 
@@ -33,6 +32,7 @@ Because I can't find a GUI DLL Injector that written in Rust. and I decided to m
 - CreateRemoteThread
 - RtlCreateUserThread
 - QueueUserAPC
+- NtCreateThreadEx
 
 ## Download
 
