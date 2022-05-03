@@ -20,6 +20,8 @@ Rusty DLL Injector with GUI
 
 ![Screenshot](./assets/screenshot.png)
 
+*(UI is same with v1.2.0)*
+
 </div>
 
 ## Why?
