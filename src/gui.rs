@@ -13,6 +13,24 @@ use std::ffi::OsStr;
 use std::path::Path;
 use sysinfo::{PidExt, ProcessExt, System, SystemExt};
 
+#[derive(Debug, std::cmp::PartialEq)]
+enum InjectionMethods {
+    CreateRemoteThread,
+    RltCreateUserThread,
+}
+
+// this struct holds application data for window lifecycle
+pub struct DLLCrabWindow {
+    pid: String,
+    dll_name: String,
+    dll_path: String,
+    process_filter: String,
+    system: System,
+    processes: HashMap<u32, String>,
+    close_after_injection: bool,
+    selected_method: InjectionMethods,
+}
+
 // this function runs a new egui instance
 pub fn draw_window() {
     // window options
@@ -37,17 +55,6 @@ pub fn draw_window() {
     );
 }
 
-// this struct holds application data for window lifecycle
-pub struct DLLCrabWindow {
-    pid: String,
-    dll_name: String,
-    dll_path: String,
-    process_filter: String,
-    system: System,
-    processes: HashMap<u32, String>,
-    close_after_injection: bool,
-}
-
 impl Default for DLLCrabWindow {
     fn default() -> Self {
         let mut data = Self {
@@ -58,6 +65,7 @@ impl Default for DLLCrabWindow {
             system: System::new_all(),
             processes: HashMap::new(),
             close_after_injection: false,
+            selected_method: InjectionMethods::CreateRemoteThread,
         };
 
         data.system.refresh_all();
@@ -95,7 +103,12 @@ impl DLLCrabWindow {
 
         // run injector
         let pid: u32 = pid.unwrap();
-        let result = injector::inject_dll(pid, &self.dll_path);
+        let function_to_use = match self.selected_method {
+            InjectionMethods::CreateRemoteThread => injector::inject_create_remote_thread,
+            InjectionMethods::RltCreateUserThread => injector::inject_rlt_create_user_thread,
+        };
+
+        let result = function_to_use(pid, &self.dll_path);
 
         // check result
         unsafe {
@@ -175,6 +188,24 @@ impl eframe::App for DLLCrabWindow {
                 ui.horizontal(|ui: &mut egui::Ui| {
                     ui.label("Application PID: ");
                     ui.text_edit_singleline(&mut self.pid);
+                });
+
+                ui.horizontal(|ui: &mut egui::Ui| {
+                    ui.label("Injection Method: ");
+                    egui::ComboBox::from_label("")
+                        .selected_text(format!("{:?}", self.selected_method))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(
+                                &mut self.selected_method,
+                                InjectionMethods::CreateRemoteThread,
+                                "CreateRemoteThread",
+                            );
+                            ui.selectable_value(
+                                &mut self.selected_method,
+                                InjectionMethods::RltCreateUserThread,
+                                "RltCreateUserThread",
+                            );
+                        });
                 });
 
                 // display buttons as inline-block

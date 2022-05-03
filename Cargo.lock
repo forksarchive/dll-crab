@@ -423,6 +423,7 @@ name = "dll-crab"
 version = "1.0.0"
 dependencies = [
  "eframe",
+ "ntapi",
  "rfd",
  "sysinfo",
  "winapi",
